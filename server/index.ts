@@ -25,8 +25,9 @@ app.use(cors({
 app.use(express.json());
 
 // Paths
-const MAIN_PATH = path.join(BASE_DIR, 'main.py');
-const FRONTEND_DIST = path.join(BASE_DIR, 'frontend', 'dist');
+const BACKUP_DIR = path.join(BASE_DIR, 'backup');
+const MAIN_PATH = path.join(BACKUP_DIR, 'main.py');
+const FRONTEND_DIST = path.join(BASE_DIR, 'dist');
 
 // Helper functions
 const stripAnsi = (text: string): string => {
@@ -179,7 +180,7 @@ const streamSubprocess = (
 
   const proc = spawn(cmd[0], cmd.slice(1), {
     env,
-    cwd: BASE_DIR,
+    cwd: BACKUP_DIR,
   });
 
   if (res) {
@@ -378,6 +379,7 @@ app.get('*', (req: Request, res: Response) => {
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Server running on http://0.0.0.0:${PORT}`);
   console.log(`📁 Base directory: ${BASE_DIR}`);
+  console.log(`📦 Backup directory: ${BACKUP_DIR}`);
   console.log(`🐍 Python main.py: ${MAIN_PATH}`);
   console.log(`🎨 Frontend dist: ${FRONTEND_DIST}`);
 });
