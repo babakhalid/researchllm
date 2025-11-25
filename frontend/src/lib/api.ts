@@ -1,6 +1,6 @@
-// In production (Railway), the API is served from the same origin
-// In development, we use localhost:8000
-export const API_BASE_URL = import.meta.env.DEV ? "http://localhost:8000" : "";
+// API requests go through Vite's proxy in development and same-origin in production
+// The proxy is configured in vite.config.ts to forward /api/* to the Python backend
+export const API_BASE_URL = "";
 
 // LocalStorage key for user credentials
 const CREDENTIALS_STORAGE_KEY = "ai_researcher_credentials";
