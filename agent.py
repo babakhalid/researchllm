@@ -267,7 +267,7 @@ Working loop:
 """
 
 
-def run_experiment_loop(hypothesis: str, test_mode: bool = False, model: str = "gemini-3-pro-preview"):
+def run_experiment_loop(hypothesis: str, test_mode: bool = False, model: str = "claude-opus-4-5"):
     """Main agent loop using Gemini 3 Pro or Claude Opus 4.5 with thinking + manual tool calling."""
     gpu_hint = _selected_gpu or "CPU"
 

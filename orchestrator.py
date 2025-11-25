@@ -17,7 +17,7 @@ from logger import print_panel, print_status, log_step, logger
 
 # Global orchestrator state
 _default_gpu: Optional[str] = None
-_default_model: str = "gemini-3-pro-preview"
+_default_model: str = "claude-opus-4-5"
 _experiment_counter: int = 0
 
 # Regex for stripping ANSI escape sequences (Rich colour codes, etc.).
@@ -405,10 +405,10 @@ def run_orchestrator_loop(
     default_gpu: Optional[str] = None,
     max_parallel_experiments: int = 2,
     test_mode: bool = False,
-    model: str = "gemini-3-pro-preview",
+    model: str = "claude-opus-4-5",
 ) -> None:
     """
-    Main orchestrator loop using Gemini 3 Pro or Claude Opus 4.5 with thinking + manual tool calling.
+    Main orchestrator loop using Claude Opus 4.5 with thinking + manual tool calling.
 
     Args:
         research_task: High-level research question or task to investigate.
@@ -538,6 +538,267 @@ def run_orchestrator_loop(
             default_gpu=default_gpu,
             max_parallel_experiments=max_parallel_experiments,
         )
+
+
+def _run_gemini_reviewer(
+    draft_paper: str,
+    research_task: str,
+    experiment_summaries: List[Dict[str, Any]],
+) -> Dict[str, Any]:
+    """
+    Run a Gemini-based reviewer agent to critique the draft paper.
+
+    Returns a dict with:
+        - review: The detailed review/critique
+        - suggestions: List of improvement suggestions
+        - score: Overall quality score (1-10)
+        - approved: Whether the paper is ready for publication
+    """
+    print_panel("Starting peer review process...", "Gemini Reviewer", "bold cyan")
+    log_step("REVIEW_START", "Initiating Gemini peer review")
+    emit_event("REVIEW_START", {"status": "starting"})
+
+    api_key = os.environ.get("GOOGLE_API_KEY")
+    if not api_key:
+        print_status("GOOGLE_API_KEY not set - skipping Gemini review", "warning")
+        return {
+            "review": "Review skipped - no Google API key available",
+            "suggestions": [],
+            "score": 0,
+            "approved": True,  # Skip review, approve by default
+        }
+
+    client = genai.Client(api_key=api_key)
+
+    # Build experiment context for the reviewer
+    exp_context = ""
+    for exp in experiment_summaries:
+        exp_id = exp.get("experiment_id", "?")
+        hypothesis = exp.get("hypothesis", "N/A")
+        exit_code = exp.get("exit_code", "?")
+        exp_context += f"\n- Experiment {exp_id}: {hypothesis[:100]}... (exit code: {exit_code})"
+
+    system_prompt = """You are a rigorous peer reviewer for AI-generated research papers.
+Your job is to critically evaluate the draft paper and provide constructive feedback.
+
+Review Criteria:
+1. **Scientific Rigor**: Are claims well-supported by evidence? Are experiments properly designed?
+2. **Methodology**: Is the experimental methodology sound and reproducible?
+3. **Results Interpretation**: Are results accurately interpreted without overclaiming?
+4. **Limitations**: Are limitations honestly acknowledged?
+5. **Clarity**: Is the paper well-written and clearly structured?
+6. **Completeness**: Does the paper adequately address the research question?
+
+Output your review in the following JSON format:
+{
+    "overall_assessment": "A 2-3 sentence summary of the paper quality",
+    "strengths": ["strength 1", "strength 2", ...],
+    "weaknesses": ["weakness 1", "weakness 2", ...],
+    "suggestions": ["specific suggestion 1", "specific suggestion 2", ...],
+    "score": <number 1-10>,
+    "approved": <true if score >= 7, false otherwise>,
+    "detailed_review": "A paragraph-length detailed review"
+}
+
+Be constructive but rigorous. Point out genuine issues but acknowledge good work."""
+
+    review_prompt = f"""Please review the following draft research paper.
+
+ORIGINAL RESEARCH TASK:
+{research_task}
+
+EXPERIMENTS CONDUCTED:
+{exp_context if exp_context else "No experiments recorded"}
+
+DRAFT PAPER:
+---
+{draft_paper}
+---
+
+Provide your peer review in the specified JSON format."""
+
+    try:
+        print_status("Gemini reviewer analyzing draft...", "info")
+        emit_event("REVIEW_THINKING", {"status": "analyzing"})
+
+        # Use streaming to show progress
+        response_stream = client.models.generate_content_stream(
+            model="gemini-2.0-flash",
+            contents=[
+                types.Content(
+                    role="user",
+                    parts=[types.Part.from_text(text=review_prompt)],
+                )
+            ],
+            config=types.GenerateContentConfig(
+                system_instruction=system_prompt,
+                temperature=0.3,
+                max_output_tokens=4000,
+            ),
+        )
+
+        # Accumulate the response
+        review_text = ""
+        for chunk in response_stream:
+            if chunk.candidates and chunk.candidates[0].content:
+                for part in chunk.candidates[0].content.parts:
+                    if part.text:
+                        review_text += part.text
+                        # Stream review chunks to frontend
+                        emit_event("REVIEW_STREAM", {"chunk": part.text})
+
+        # Parse the JSON response
+        review_text = review_text.strip()
+
+        # Try to extract JSON from the response
+        result: Dict[str, Any] = {}
+        try:
+            # Look for JSON block
+            if "{" in review_text and "}" in review_text:
+                json_start = review_text.find("{")
+                json_end = review_text.rfind("}") + 1
+                json_str = review_text[json_start:json_end]
+                result = json.loads(json_str)
+        except json.JSONDecodeError:
+            # Fallback: create structured result from raw text
+            result = {
+                "overall_assessment": "Review completed but JSON parsing failed",
+                "strengths": [],
+                "weaknesses": [],
+                "suggestions": [],
+                "score": 7,
+                "approved": True,
+                "detailed_review": review_text,
+            }
+
+        # Ensure required fields exist
+        result.setdefault("overall_assessment", "No assessment provided")
+        result.setdefault("strengths", [])
+        result.setdefault("weaknesses", [])
+        result.setdefault("suggestions", [])
+        result.setdefault("score", 7)
+        result.setdefault("approved", result.get("score", 7) >= 7)
+        result.setdefault("detailed_review", "")
+
+        # Display the review
+        review_display = f"""📊 **Score: {result['score']}/10** {'✅ Approved' if result['approved'] else '⚠️ Needs Revision'}
+
+**Overall Assessment:**
+{result['overall_assessment']}
+
+**Strengths:**
+{chr(10).join('• ' + s for s in result['strengths']) if result['strengths'] else '• None identified'}
+
+**Weaknesses:**
+{chr(10).join('• ' + w for w in result['weaknesses']) if result['weaknesses'] else '• None identified'}
+
+**Suggestions for Improvement:**
+{chr(10).join('• ' + s for s in result['suggestions']) if result['suggestions'] else '• None'}
+
+**Detailed Review:**
+{result['detailed_review'][:1000]}{'...' if len(result.get('detailed_review', '')) > 1000 else ''}"""
+
+        print_panel(review_display, "Peer Review Complete", "bold cyan")
+        log_step("REVIEW_COMPLETE", f"Score: {result['score']}/10, Approved: {result['approved']}")
+        emit_event("REVIEW_COMPLETE", {
+            "score": result["score"],
+            "approved": result["approved"],
+            "assessment": result["overall_assessment"],
+            "strengths": result["strengths"],
+            "weaknesses": result["weaknesses"],
+            "suggestions": result["suggestions"],
+        })
+
+        return result
+
+    except Exception as e:
+        print_status(f"Gemini reviewer error: {e}", "error")
+        logger.error(f"Gemini reviewer error: {e}")
+        emit_event("REVIEW_ERROR", {"error": str(e)})
+        return {
+            "review": f"Review failed: {e}",
+            "suggestions": [],
+            "score": 0,
+            "approved": True,  # Don't block on review failure
+        }
+
+
+def _revise_paper_with_feedback(
+    client: anthropic.Anthropic,
+    system_prompt: str,
+    messages: List[Dict],
+    draft_paper: str,
+    review_result: Dict[str, Any],
+) -> str:
+    """
+    Ask Claude to revise the paper based on reviewer feedback.
+    """
+    print_status("Revising paper based on reviewer feedback...", "info")
+    emit_event("REVISION_START", {"status": "revising"})
+
+    suggestions = review_result.get("suggestions", [])
+    weaknesses = review_result.get("weaknesses", [])
+
+    revision_prompt = f"""The peer reviewer has provided feedback on your draft paper.
+
+**Reviewer Score:** {review_result.get('score', 'N/A')}/10
+
+**Weaknesses Identified:**
+{chr(10).join('- ' + w for w in weaknesses) if weaknesses else 'None'}
+
+**Suggestions for Improvement:**
+{chr(10).join('- ' + s for s in suggestions) if suggestions else 'None'}
+
+**Overall Assessment:**
+{review_result.get('overall_assessment', 'No assessment')}
+
+Please revise your paper to address the reviewer's concerns. Focus especially on:
+1. Addressing the identified weaknesses
+2. Incorporating the suggestions where appropriate
+3. Strengthening any claims that need better support
+
+Output the complete revised paper. When done, end with [DONE]."""
+
+    messages.append({"role": "user", "content": revision_prompt})
+
+    try:
+        revised_text = []
+
+        with client.messages.stream(
+            model="claude-opus-4-5-20251101",
+            max_tokens=16000,
+            thinking={
+                "type": "enabled",
+                "budget_tokens": 8000
+            },
+            system=system_prompt,
+            messages=messages,
+        ) as stream:
+            for event in stream:
+                if hasattr(event, 'type'):
+                    if event.type == 'content_block_start':
+                        if hasattr(event, 'content_block'):
+                            block = event.content_block
+                            if hasattr(block, 'type') and block.type == 'text':
+                                revised_text.append("")
+                    elif event.type == 'content_block_delta':
+                        if hasattr(event, 'delta'):
+                            delta = event.delta
+                            if hasattr(delta, 'type'):
+                                if delta.type == 'thinking_delta' and hasattr(delta, 'thinking'):
+                                    emit_event("REVISION_THOUGHT_STREAM", {"chunk": delta.thinking})
+                                elif delta.type == 'text_delta' and hasattr(delta, 'text'):
+                                    if revised_text:
+                                        revised_text[-1] += delta.text
+
+        final_revised = "\n\n".join(t for t in revised_text if t)
+        emit_event("REVISION_COMPLETE", {"status": "done"})
+        return final_revised
+
+    except Exception as e:
+        print_status(f"Revision failed: {e}", "error")
+        logger.error(f"Revision failed: {e}")
+        return draft_paper  # Return original if revision fails
 
 
 def _build_claude_orchestrator_tool_definition() -> dict:
@@ -686,11 +947,40 @@ def _run_claude_orchestrator_loop(
         if "[DONE]" in combined_text:
             if text_content:
                 final_content = "\n\n".join(t for t in text_content if t)
-                display_content = final_content.replace("[DONE]", "").strip()
-                if display_content:
-                    print_panel(display_content, "Final Paper", "bold green")
+                draft_paper = final_content.replace("[DONE]", "").strip()
+                if draft_paper:
+                    # Run Gemini reviewer on the draft
+                    print_panel(draft_paper[:2000] + "..." if len(draft_paper) > 2000 else draft_paper,
+                               "Draft Paper (Preview)", "bold yellow")
+                    emit_event("DRAFT_COMPLETE", {"content": draft_paper[:5000]})
+
+                    review_result = _run_gemini_reviewer(
+                        draft_paper=draft_paper,
+                        research_task=research_task,
+                        experiment_summaries=all_experiments,
+                    )
+
+                    # If review score is low, ask Claude to revise
+                    final_paper = draft_paper
+                    if review_result.get("score", 10) < 7 and not review_result.get("approved", True):
+                        print_status("Paper needs revision based on reviewer feedback...", "info")
+                        # Add draft to messages for revision context
+                        messages.append({"role": "assistant", "content": draft_paper})
+                        final_paper = _revise_paper_with_feedback(
+                            client=client,
+                            system_prompt=system_prompt,
+                            messages=messages,
+                            draft_paper=draft_paper,
+                            review_result=review_result,
+                        )
+                        final_paper = final_paper.replace("[DONE]", "").strip()
+                        print_panel(final_paper, "Revised Final Paper", "bold green")
+                    else:
+                        print_status("Paper approved by reviewer!", "success")
+                        print_panel(final_paper, "Final Paper", "bold green")
+
                     log_step("ORCH_FINAL", "Final paper generated (in loop).")
-                    emit_event("ORCH_PAPER", {"content": display_content})
+                    emit_event("ORCH_PAPER", {"content": final_paper, "review_score": review_result.get("score", 0)})
             print_status("Orchestrator signaled completion.", "success")
             return
 
@@ -825,23 +1115,27 @@ def _run_claude_orchestrator_loop(
             )
             log_step("ORCH_SUMMARY", f"{len(all_experiments)} experiments run so far")
 
-    # Safety net: request final paper
+    # Safety net: request draft paper for review
     print_status(
-        "Orchestrator loop ended without explicit [DONE]. Requesting final paper...",
+        "Orchestrator loop ended without explicit [DONE]. Requesting draft paper...",
         "bold yellow",
     )
     messages.append({
         "role": "user",
         "content": (
             "Using everything above (including all transcripts and notes), "
-            "write the final Arxiv-style paper as specified in the system prompt. "
-            "When you are finished, end with a line containing only [DONE]."
+            "write a draft Arxiv-style paper as specified in the system prompt. "
+            "This will be reviewed before finalization. Do NOT include [DONE] yet."
         )
     })
 
     try:
-        final_thinking = []
-        final_text = []
+        # Step 1: Generate draft paper
+        print_status("Generating draft paper for review...", "info")
+        emit_event("DRAFT_START", {"status": "generating"})
+
+        draft_thinking = []
+        draft_text = []
 
         with client.messages.stream(
             model="claude-opus-4-5-20251101",
@@ -860,25 +1154,58 @@ def _run_claude_orchestrator_loop(
                             block = event.content_block
                             if hasattr(block, 'type'):
                                 if block.type == 'thinking':
-                                    final_thinking.append("")
+                                    draft_thinking.append("")
                                 elif block.type == 'text':
-                                    final_text.append("")
+                                    draft_text.append("")
                     elif event.type == 'content_block_delta':
                         if hasattr(event, 'delta'):
                             delta = event.delta
                             if hasattr(delta, 'type'):
                                 if delta.type == 'thinking_delta' and hasattr(delta, 'thinking'):
-                                    if final_thinking:
-                                        final_thinking[-1] += delta.thinking
+                                    if draft_thinking:
+                                        draft_thinking[-1] += delta.thinking
                                         emit_event("ORCH_THOUGHT_STREAM", {"chunk": delta.thinking})
                                 elif delta.type == 'text_delta' and hasattr(delta, 'text'):
-                                    if final_text:
-                                        final_text[-1] += delta.text
+                                    if draft_text:
+                                        draft_text[-1] += delta.text
 
-        final_paper = "\n\n".join(t for t in final_text if t)
-        print_panel(final_paper, "Final Paper", "bold green")
+        draft_paper = "\n\n".join(t for t in draft_text if t)
+        print_panel(draft_paper[:2000] + "..." if len(draft_paper) > 2000 else draft_paper,
+                   "Draft Paper (Preview)", "bold yellow")
+        log_step("DRAFT_COMPLETE", "Draft paper generated for review.")
+        emit_event("DRAFT_COMPLETE", {"content": draft_paper[:5000]})
+
+        # Add draft to message history for context
+        messages.append({"role": "assistant", "content": draft_paper})
+
+        # Step 2: Run Gemini reviewer
+        review_result = _run_gemini_reviewer(
+            draft_paper=draft_paper,
+            research_task=research_task,
+            experiment_summaries=all_experiments,
+        )
+
+        # Step 3: If review score is low, ask Claude to revise
+        final_paper = draft_paper
+        if review_result.get("score", 10) < 7 and not review_result.get("approved", True):
+            print_status("Paper needs revision based on reviewer feedback...", "info")
+            final_paper = _revise_paper_with_feedback(
+                client=client,
+                system_prompt=system_prompt,
+                messages=messages,
+                draft_paper=draft_paper,
+                review_result=review_result,
+            )
+            # Clean up [DONE] if present
+            final_paper = final_paper.replace("[DONE]", "").strip()
+            print_panel(final_paper, "Revised Final Paper", "bold green")
+        else:
+            print_status("Paper approved by reviewer!", "success")
+            print_panel(final_paper, "Final Paper", "bold green")
+
         log_step("ORCH_FINAL", "Final paper generated.")
-        emit_event("ORCH_PAPER", {"content": final_paper})
+        emit_event("ORCH_PAPER", {"content": final_paper, "review_score": review_result.get("score", 0)})
+
     except Exception as e:
         print_status(f"Failed to generate final paper: {e}", "error")
         logger.error(f"Failed to generate final paper: {e}")

@@ -2,8 +2,8 @@
 
 This helper stays **separate** from the main agents/orchestrator logic.
 It only consumes the recent public transcript (last ~5 steps) and asks a
-cheaper Gemini model (no thinking mode) to condense it into a tiny finding
-plus an optional chart spec the frontend can render.
+cheaper model to condense it into a tiny finding plus an optional chart
+spec the frontend can render.
 """
 
 from __future__ import annotations
@@ -13,24 +13,23 @@ import os
 import logging
 from typing import Any, Dict, List, Optional
 
-from google import genai
-from google.genai import types
+import anthropic
 
 logger = logging.getLogger(__name__)
 
 
-_client: Optional[genai.Client] = None
+_client: Optional[anthropic.Anthropic] = None
 
 
-def _get_client() -> genai.Client:
-    """Lazily create a single Gemini client (re-used across requests)."""
+def _get_client() -> anthropic.Anthropic:
+    """Lazily create a single Anthropic client (re-used across requests)."""
 
     global _client
     if _client is None:
-        api_key = os.environ.get("GOOGLE_API_KEY")
+        api_key = os.environ.get("ANTHROPIC_API_KEY")
         if not api_key:
-            raise RuntimeError("GOOGLE_API_KEY is not set")
-        _client = genai.Client(api_key=api_key)
+            raise RuntimeError("ANTHROPIC_API_KEY is not set")
+        _client = anthropic.Anthropic(api_key=api_key)
     return _client
 
 
@@ -83,39 +82,24 @@ def summarize_agent_findings(
     client = _get_client()
 
     try:
-        response = client.models.generate_content(
-            model="gemini-3-pro-preview",  # cheaper, no thinking mode
-            contents=[
-                types.Content(
-                    role="user",
-                    parts=[types.Part.from_text(text=prompt)],
-                )
+        response = client.messages.create(
+            model="claude-opus-4-5-20251101",  # Using Opus 4.5
+            max_tokens=4000,
+            system=system_instruction,
+            messages=[
+                {"role": "user", "content": prompt}
             ],
-            config=types.GenerateContentConfig(
-                system_instruction=system_instruction,
-                temperature=0.2,
-                max_output_tokens=4000,
-            ),
         )
     except Exception as e:
-        logger.error("Gemini summarize failed for agent %s: %s", agent_id, e)
+        logger.error("Claude summarize failed for agent %s: %s", agent_id, e)
         raise
 
     raw_text = ""
     try:
-        # Prefer the convenience accessor if available
-        raw_text = getattr(response, "text", "") or ""
-        if not raw_text:
-            candidate = response.candidates[0]
-            if candidate.content and candidate.content.parts:
-                for part in candidate.content.parts:
-                    if getattr(part, "text", None):
-                        raw_text += part.text
-                    elif getattr(part, "inline_data", None) and getattr(part.inline_data, "data", None):
-                        try:
-                            raw_text += part.inline_data.data.decode("utf-8", errors="ignore")
-                        except Exception:
-                            pass
+        # Extract text from Claude's response
+        for block in response.content:
+            if hasattr(block, 'text'):
+                raw_text += block.text
         raw_text = raw_text.strip()
     except Exception as e:
         logger.warning("Failed to extract text for agent %s: %s", agent_id, e)

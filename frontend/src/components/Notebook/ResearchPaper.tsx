@@ -8,6 +8,7 @@ import { ChartSpec } from "@/lib/api";
 interface ResearchPaperProps {
     content: string;
     charts?: ChartSpec[];
+    reviewScore?: number;
 }
 
 function PaperChart({ chart, compact = false }: { chart: ChartSpec; compact?: boolean }) {
@@ -154,46 +155,57 @@ function PaperChart({ chart, compact = false }: { chart: ChartSpec; compact?: bo
     );
 }
 
-export function ResearchPaper({ content, charts }: ResearchPaperProps) {
+export function ResearchPaper({ content, charts, reviewScore }: ResearchPaperProps) {
     const [isFullView, setIsFullView] = useState(false);
+
+    const getScoreColor = (score: number) => {
+        if (score >= 8) return "text-chart-2 bg-chart-2/10 border-chart-2/30";
+        if (score >= 6) return "text-chart-4 bg-chart-4/10 border-chart-4/30";
+        return "text-destructive bg-destructive/10 border-destructive/30";
+    };
 
     return (
         <>
             {/* Minimal Inline View */}
             <div className="w-full animate-in fade-in slide-in-from-bottom-8 duration-1000 pt-8">
-                <div className="border border-[#1d1d1f] bg-black/50 backdrop-blur-sm rounded-lg overflow-hidden group hover:border-[#333] transition-colors">
+                <div className="border border-border bg-card/50 backdrop-blur-sm rounded-xl overflow-hidden group hover:border-primary/30 hover:shadow-glow transition-all duration-300">
                     {/* Header */}
-                    <div className="h-12 px-4 border-b border-[#1d1d1f] flex items-center justify-between bg-black/50">
+                    <div className="h-12 px-4 border-b border-border flex items-center justify-between bg-card/50">
                         <div className="flex items-center gap-3">
-                            <div className="w-1.5 h-1.5 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.4)]" />
-                            <span className="text-[10px] font-medium text-[#f5f5f7] tracking-widest uppercase">
+                            <div className="w-1.5 h-1.5 rounded-full bg-primary shadow-[0_0_8px_hsl(var(--primary)/0.5)]" />
+                            <span className="text-[10px] font-semibold text-primary tracking-widest uppercase">
                                 Final Manuscript
                             </span>
+                            {reviewScore !== undefined && reviewScore > 0 && (
+                                <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full border ${getScoreColor(reviewScore)}`}>
+                                    Review Score: {reviewScore}/10
+                                </span>
+                            )}
                         </div>
                         <button
                             onClick={() => setIsFullView(true)}
-                            className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#1d1d1f] hover:bg-[#333] transition-all duration-300 group/btn"
+                            className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-secondary hover:bg-primary/20 border border-border hover:border-primary/50 transition-all duration-300 group/btn"
                         >
-                            <FileText className="w-3 h-3 text-[#86868b] group-hover/btn:text-white transition-colors" />
-                            <span className="text-[10px] font-medium text-[#86868b] group-hover/btn:text-white transition-colors uppercase tracking-wide">
+                            <FileText className="w-3 h-3 text-muted-foreground group-hover/btn:text-primary transition-colors" />
+                            <span className="text-[10px] font-medium text-muted-foreground group-hover/btn:text-primary transition-colors uppercase tracking-wide">
                                 View Paper
                             </span>
                         </button>
                     </div>
 
                     {/* Preview Content */}
-                    <div className="p-8 max-h-[400px] overflow-hidden relative bg-[#050505]">
-                        <div className="prose prose-invert prose-sm max-w-none prose-p:text-[#86868b] prose-headings:text-[#f5f5f7] prose-strong:text-[#f5f5f7] font-serif">
+                    <div className="p-8 max-h-[400px] overflow-hidden relative bg-background">
+                        <div className="prose prose-invert prose-sm max-w-none prose-p:text-muted-foreground prose-headings:text-foreground prose-strong:text-foreground font-serif">
                             <ReactMarkdown remarkPlugins={[remarkGfm]}>
                                 {content}
                             </ReactMarkdown>
                         </div>
                         {charts && charts.length > 0 && (
                             <div className="mt-6 space-y-3">
-                                <p className="text-[10px] tracking-[0.18em] uppercase text-[#6f6f77]">Figures (preview)</p>
+                                <p className="text-[10px] tracking-[0.18em] uppercase text-muted-foreground">Figures (preview)</p>
                                 <div className="flex gap-3 overflow-x-auto pb-2">
                                     {charts.slice(0, 3).map((chart, idx) => (
-                                        <div key={idx} className="min-w-[320px] bg-[#0b0b0b] border border-[#1d1d1f] rounded-lg">
+                                        <div key={idx} className="min-w-[320px] bg-card border border-border rounded-lg">
                                             <PaperChart chart={chart} compact />
                                         </div>
                                     ))}
@@ -201,7 +213,7 @@ export function ResearchPaper({ content, charts }: ResearchPaperProps) {
                             </div>
                         )}
                         {/* Gradient Fade */}
-                        <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-[#050505] to-transparent pointer-events-none" />
+                        <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-background to-transparent pointer-events-none" />
                     </div>
                 </div>
             </div>
@@ -328,7 +340,7 @@ export function ResearchPaper({ content, charts }: ResearchPaperProps) {
                                         
                                         {/* Footer */}
                                         <div className="mt-24 pt-8 border-t border-gray-200 flex flex-col items-center gap-2 text-gray-400">
-                                            <p className="text-[10px] font-mono">Preprint generated by AI Researcher</p>
+                                            <p className="text-[10px] font-mono">Preprint generated by AI-researcher</p>
                                         </div>
                                     </article>
                                 </div>

@@ -29,16 +29,30 @@ export interface AgentState {
     insights: AgentInsight[];
 }
 
+export interface ReviewState {
+    status: "idle" | "reviewing" | "complete" | "error";
+    score?: number;
+    approved?: boolean;
+    assessment?: string;
+    strengths?: string[];
+    weaknesses?: string[];
+    suggestions?: string[];
+    streamContent?: string;
+}
+
 export type TimelineItem =
     | { type: "thought"; content: string; timestamp: number }
     | { type: "agents"; agentIds: string[]; timestamp: number }
-    | { type: "paper"; content: string; charts?: ChartSpec[]; timestamp: number };
+    | { type: "draft"; content: string; timestamp: number }
+    | { type: "review"; review: ReviewState; timestamp: number }
+    | { type: "paper"; content: string; charts?: ChartSpec[]; reviewScore?: number; timestamp: number };
 
 export interface OrchestratorState {
-    status: "idle" | "planning" | "running" | "completed";
+    status: "idle" | "planning" | "running" | "reviewing" | "completed";
     thoughts: string[];
     plan: string[];
     timeline: TimelineItem[];
+    review?: ReviewState;
 }
 
 export function useExperiment() {
@@ -508,12 +522,14 @@ export function useExperiment() {
 
                 setOrchestrator((prev) => ({
                     ...prev,
+                    status: "completed",
                     timeline: [
                         ...prev.timeline,
                         {
                             type: "paper",
                             content: data.content,
                             charts: uniqueCharts.slice(0, 6), // keep it concise
+                            reviewScore: data.review_score,
                             timestamp: Date.now(),
                         },
                     ],
@@ -522,6 +538,136 @@ export function useExperiment() {
 
             case "ORCH_TOOL":
                 // We could also track orchestrator steps if we wanted a notebook for it
+                break;
+
+            // Review events
+            case "DRAFT_START":
+                setOrchestrator((prev) => ({
+                    ...prev,
+                    status: "running",
+                }));
+                break;
+
+            case "DRAFT_COMPLETE":
+                setOrchestrator((prev) => ({
+                    ...prev,
+                    timeline: [
+                        ...prev.timeline,
+                        {
+                            type: "draft",
+                            content: data.content,
+                            timestamp: Date.now(),
+                        },
+                    ],
+                }));
+                break;
+
+            case "REVIEW_START":
+                setOrchestrator((prev) => ({
+                    ...prev,
+                    status: "reviewing",
+                    review: {
+                        status: "reviewing",
+                        streamContent: "",
+                    },
+                    timeline: [
+                        ...prev.timeline,
+                        {
+                            type: "review",
+                            review: { status: "reviewing" },
+                            timestamp: Date.now(),
+                        },
+                    ],
+                }));
+                break;
+
+            case "REVIEW_THINKING":
+                // Just an indicator that review is analyzing
+                break;
+
+            case "REVIEW_STREAM":
+                if (typeof data?.chunk === "string") {
+                    setOrchestrator((prev) => {
+                        const newReview = {
+                            ...prev.review,
+                            status: "reviewing" as const,
+                            streamContent: (prev.review?.streamContent || "") + data.chunk,
+                        };
+
+                        // Update the review item in timeline
+                        const timeline = [...prev.timeline];
+                        const reviewIdx = timeline.findIndex(item => item.type === "review");
+                        if (reviewIdx !== -1) {
+                            timeline[reviewIdx] = {
+                                ...timeline[reviewIdx],
+                                review: newReview,
+                            } as TimelineItem;
+                        }
+
+                        return {
+                            ...prev,
+                            review: newReview,
+                            timeline,
+                        };
+                    });
+                }
+                break;
+
+            case "REVIEW_COMPLETE":
+                setOrchestrator((prev) => {
+                    const completeReview: ReviewState = {
+                        status: "complete",
+                        score: data.score,
+                        approved: data.approved,
+                        assessment: data.assessment,
+                        strengths: data.strengths,
+                        weaknesses: data.weaknesses,
+                        suggestions: data.suggestions,
+                    };
+
+                    // Update the review item in timeline
+                    const timeline = [...prev.timeline];
+                    const reviewIdx = timeline.findIndex(item => item.type === "review");
+                    if (reviewIdx !== -1) {
+                        timeline[reviewIdx] = {
+                            ...timeline[reviewIdx],
+                            review: completeReview,
+                        } as TimelineItem;
+                    }
+
+                    return {
+                        ...prev,
+                        status: "running", // Back to running for potential revision
+                        review: completeReview,
+                        timeline,
+                    };
+                });
+                break;
+
+            case "REVIEW_ERROR":
+                setOrchestrator((prev) => ({
+                    ...prev,
+                    review: {
+                        ...prev.review,
+                        status: "error",
+                    },
+                }));
+                break;
+
+            case "REVISION_START":
+                // Paper is being revised based on feedback
+                setOrchestrator((prev) => ({
+                    ...prev,
+                    status: "running",
+                }));
+                break;
+
+            case "REVISION_THOUGHT_STREAM":
+                // Optionally stream revision thoughts - could be added to timeline
+                break;
+
+            case "REVISION_COMPLETE":
+                // Revision done, paper event will follow
                 break;
         }
     };

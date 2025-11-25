@@ -1,10 +1,11 @@
 import { useState, useEffect, useRef } from "react";
-import { Loader2, Play } from "lucide-react";
+import { Loader2, Play, FileText } from "lucide-react";
 import { motion } from "framer-motion";
 import { useExperiment } from "@/lib/useExperiment";
 import { FindingsRail } from "./FindingsRail";
 import { AgentNotebook } from "./Notebook/AgentNotebook";
 import { ResearchPaper } from "./Notebook/ResearchPaper";
+import { PeerReview } from "./Notebook/PeerReview";
 import { cn } from "@/lib/utils";
 import { StreamingMarkdown } from "./StreamingMarkdown";
 import { CredentialPrompt, CredentialFormState } from "./CredentialPrompt";
@@ -168,20 +169,25 @@ export function LabNotebook() {
   const isStartDisabled = !task.trim() || isCheckingCredentials;
 
   return (
-    <div className="flex h-screen w-full bg-black font-sans text-[#f5f5f7] selection:bg-[#333] selection:text-white">
-      <div className="flex-1 h-full overflow-hidden flex flex-col">
-      
+    <div className="flex h-screen w-full bg-background font-sans text-foreground selection:bg-primary/20 selection:text-foreground relative overflow-hidden">
+      {/* Background mesh gradient */}
+      <div className="absolute inset-0 bg-mesh pointer-events-none" />
+      <div className="absolute inset-0 noise pointer-events-none opacity-50" />
+
+      <div className="flex-1 h-full overflow-hidden flex flex-col relative z-10">
+
         {/* Main Content Area */}
         <main className="flex-1 flex flex-col overflow-hidden relative">
 
         {/* Sticky Header for Active Research */}
         {orchestrator.timeline.length > 0 && (
-            <div className="absolute top-0 left-0 right-0 z-50 bg-black/80 backdrop-blur-xl border-b border-white/5 animate-in fade-in slide-in-from-top-4 duration-500">
+            <div className="absolute top-0 left-0 right-0 z-50 glass animate-in fade-in slide-in-from-top-4 duration-500">
                 <div className="max-w-5xl mx-auto px-8 py-4 flex items-center gap-4">
-                    <span className="text-[10px] font-medium text-[#424245] uppercase tracking-widest shrink-0">
+                    <span className="text-[10px] font-semibold text-primary uppercase tracking-widest shrink-0">
                         Objective
                     </span>
-                    <p className="text-sm font-light text-[#e5e5e5] truncate">
+                    <div className="h-4 w-px bg-border" />
+                    <p className="text-sm font-light text-muted-foreground truncate">
                         {task}
                     </p>
                 </div>
@@ -196,23 +202,27 @@ export function LabNotebook() {
                 {orchestrator.timeline.length === 0 && !isRunning && (
                     <div className="min-h-[60vh] flex flex-col justify-center items-center space-y-12 animate-in fade-in duration-1000">
                         <div className="space-y-6 text-center max-w-lg">
-                            <h1 className="text-4xl md:text-5xl font-light tracking-tight text-white">
+                            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 mb-4">
+                                <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+                                <span className="text-xs font-medium text-primary tracking-wide">AI-researcher</span>
+                            </div>
+                            <h1 className="text-4xl md:text-5xl font-semibold tracking-tight bg-gradient-to-br from-foreground via-foreground to-muted-foreground bg-clip-text text-transparent">
                                 Research Objective
                             </h1>
-                            <p className="text-lg text-[#86868b] font-light leading-relaxed">
+                            <p className="text-lg text-muted-foreground font-light leading-relaxed">
                                 Describe your scientific query. The orchestrator will decompose it into hypotheses and launch autonomous agents to investigate.
                             </p>
                         </div>
 
                         <div className="w-full max-w-xl space-y-8">
                             <div className="relative group">
-                                <div className="absolute -inset-1 bg-gradient-to-r from-[#333] to-[#1d1d1f] rounded-2xl blur opacity-20 group-hover:opacity-40 transition duration-1000"></div>
+                                <div className="absolute -inset-0.5 bg-gradient-to-r from-primary/30 via-accent/20 to-primary/30 rounded-2xl blur-lg opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition duration-500"></div>
                                 <textarea
                                     value={task}
                                     onChange={(e) => setTask(e.target.value)}
                                     disabled={isRunning}
                                     placeholder="e.g., Investigate the scaling laws of sparse attention mechanisms..."
-                                    className="relative w-full h-32 bg-black border border-[#333] rounded-xl p-6 text-lg font-light text-white placeholder:text-[#333] focus:ring-0 focus:border-[#666] focus:outline-none resize-none leading-relaxed transition-all duration-300"
+                                    className="relative w-full h-32 bg-card border border-border rounded-xl p-6 text-lg font-light text-foreground placeholder:text-muted-foreground/50 focus:ring-2 focus:ring-primary/30 focus:border-primary/50 focus:outline-none resize-none leading-relaxed transition-all duration-300"
                                 />
                             </div>
 
@@ -221,28 +231,28 @@ export function LabNotebook() {
                                     <button
                                         onClick={() => setTestMode(!testMode)}
                                         className={cn(
-                                            "text-[10px] font-medium px-3 py-1.5 rounded-full transition-all duration-300 border border-transparent",
-                                            testMode 
-                                                ? "bg-white text-black border-white" 
-                                                : "bg-[#1d1d1f] text-[#86868b] hover:text-white border-[#333]"
+                                            "text-[10px] font-semibold px-3 py-1.5 rounded-full transition-all duration-300 border",
+                                            testMode
+                                                ? "bg-primary text-primary-foreground border-primary shadow-glow"
+                                                : "bg-secondary text-muted-foreground hover:text-foreground border-border hover:border-primary/30"
                                         )}
                                     >
                                         {testMode ? "TEST MODE" : "LIVE MODE"}
                                     </button>
-                                    <div className="h-4 w-[1px] bg-[#333]" />
+                                    <div className="h-4 w-px bg-border" />
                                     <select
                                         value={mode}
                                         onChange={(e) => setMode(e.target.value as "single" | "orchestrator")}
-                                        className="bg-transparent text-[#86868b] text-xs font-medium focus:outline-none cursor-pointer hover:text-white transition-colors"
+                                        className="bg-transparent text-muted-foreground text-xs font-medium focus:outline-none cursor-pointer hover:text-foreground transition-colors"
                                     >
                                         <option value="single">Single Agent</option>
                                         <option value="orchestrator">Agent Swarm</option>
                                     </select>
-                                    <div className="h-4 w-[1px] bg-[#333]" />
+                                    <div className="h-4 w-px bg-border" />
                                     <select
                                         value={selectedModel}
                                         onChange={(e) => setSelectedModel(e.target.value as "gemini-3-pro-preview" | "claude-opus-4-5")}
-                                        className="bg-transparent text-[#86868b] text-xs font-medium focus:outline-none cursor-pointer hover:text-white transition-colors"
+                                        className="bg-transparent text-muted-foreground text-xs font-medium focus:outline-none cursor-pointer hover:text-foreground transition-colors"
                                     >
                                         <option value="gemini-3-pro-preview">Gemini 3 Pro</option>
                                         <option value="claude-opus-4-5">Claude Opus 4.5</option>
@@ -254,10 +264,10 @@ export function LabNotebook() {
                                         onClick={handleStart}
                                         disabled={isStartDisabled}
                                         className={cn(
-                                            "px-8 py-3 rounded-full text-xs font-medium tracking-widest uppercase transition-all duration-500 flex items-center gap-2",
+                                            "px-8 py-3 rounded-xl text-xs font-semibold tracking-widest uppercase transition-all duration-300 flex items-center gap-2",
                                             isStartDisabled
-                                                ? "bg-[#1d1d1f] text-[#333] cursor-not-allowed"
-                                                : "bg-white text-black hover:bg-[#e5e5e5] hover:scale-105"
+                                                ? "bg-secondary text-muted-foreground cursor-not-allowed"
+                                                : "bg-primary text-primary-foreground hover:shadow-glow-lg hover:scale-[1.02] active:scale-[0.98]"
                                         )}
                                     >
                                         {isCheckingCredentials ? (
@@ -273,7 +283,7 @@ export function LabNotebook() {
                                         )}
                                     </button>
                                     {prereqError && (
-                                        <p className="text-xs text-red-300 text-right max-w-sm">
+                                        <p className="text-xs text-destructive text-right max-w-sm">
                                             {prereqError}
                                         </p>
                                     )}
@@ -287,17 +297,17 @@ export function LabNotebook() {
                 {orchestrator.timeline.length === 0 && isRunning && (
                     <div className="min-h-[60vh] flex flex-col justify-center items-center space-y-8 animate-in fade-in duration-700">
                         <div className="relative">
-                            <div className="absolute inset-0 bg-white/20 blur-xl rounded-full animate-pulse"></div>
-                            <div className="relative w-16 h-16 border-t-2 border-white rounded-full animate-spin"></div>
+                            <div className="absolute inset-0 bg-primary/20 blur-xl rounded-full animate-pulse"></div>
+                            <div className="relative w-16 h-16 border-t-2 border-primary rounded-full animate-spin"></div>
                             <div className="absolute inset-0 flex items-center justify-center">
-                                <div className="w-2 h-2 bg-white rounded-full animate-ping" />
+                                <div className="w-2 h-2 bg-primary rounded-full animate-ping" />
                             </div>
                         </div>
                         <div className="space-y-2 text-center">
-                            <h2 className="text-xl font-light text-white tracking-wide animate-pulse">
+                            <h2 className="text-xl font-medium text-foreground tracking-wide animate-pulse">
                                 Initializing Research Environment
                             </h2>
-                            <p className="text-sm text-[#86868b] font-mono">
+                            <p className="text-sm text-muted-foreground font-mono">
                                 Spinning up main agent...
                             </p>
                         </div>
@@ -309,40 +319,40 @@ export function LabNotebook() {
                     const key = item.timestamp ?? `${item.type}-${index}`;
                     if (item.type === "thought") {
                         return (
-                            <motion.div 
-                                key={key} 
+                            <motion.div
+                                key={key}
                                 initial={{ opacity: 0, y: 20, filter: "blur(10px)" }}
                                 animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
                                 transition={{ duration: 0.8, ease: "easeOut" }}
                                 className="w-full"
                             >
-                                <div className="pl-6 border-l border-[#333] py-2">
-                                    <span className="block text-[10px] font-medium text-[#424245] uppercase tracking-widest mb-3">
+                                <div className="pl-6 border-l-2 border-primary/30 py-2">
+                                    <span className="block text-[10px] font-semibold text-primary uppercase tracking-widest mb-3">
                                         Orchestrator
                                     </span>
                                     <StreamingMarkdown
                                         animateKey={key}
                                         content={item.content}
-                                        markdownClassName="prose prose-invert prose-lg md:prose-xl max-w-none prose-p:text-[#d1d1d6] prose-p:font-light prose-p:leading-relaxed prose-strong:text-white prose-headings:text-white prose-code:text-[#d1d1d6] prose-pre:bg-[#1d1d1f] prose-pre:border prose-pre:border-[#333]"
+                                        markdownClassName="prose prose-invert prose-lg md:prose-xl max-w-none prose-p:text-muted-foreground prose-p:font-light prose-p:leading-relaxed prose-strong:text-foreground prose-headings:text-foreground prose-code:text-primary/80 prose-pre:bg-card prose-pre:border prose-pre:border-border"
                                     />
                                 </div>
                             </motion.div>
                         );
                     } else if (item.type === "agents") {
                         return (
-                            <motion.div 
-                                key={key} 
+                            <motion.div
+                                key={key}
                                 initial={{ opacity: 0, y: 20, filter: "blur(10px)" }}
                                 animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
                                 transition={{ duration: 0.8, ease: "easeOut" }}
                                 className="space-y-8"
                             >
                                 <div className="flex items-center gap-3">
-                                    <div className="h-[1px] w-8 bg-[#333]" />
-                                    <span className="text-[10px] font-medium text-[#424245] uppercase tracking-widest">
+                                    <div className="h-px w-8 bg-gradient-to-r from-primary/50 to-transparent" />
+                                    <span className="text-[10px] font-semibold text-primary uppercase tracking-widest">
                                         Sub-Agents Deployed
                                     </span>
-                                    <div className="h-[1px] flex-1 bg-[#333]" />
+                                    <div className="h-px flex-1 bg-gradient-to-r from-primary/30 to-transparent" />
                                 </div>
                                 <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
                                     {item.agentIds.map((agentId) => {
@@ -357,6 +367,51 @@ export function LabNotebook() {
                                 </div>
                             </motion.div>
                         );
+                    } else if (item.type === "draft") {
+                        return (
+                            <motion.div
+                                key={key}
+                                initial={{ opacity: 0, y: 20, filter: "blur(10px)" }}
+                                animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                                transition={{ duration: 0.8, ease: "easeOut" }}
+                                className="w-full"
+                            >
+                                <div className="border border-chart-4/30 bg-card/50 backdrop-blur-sm rounded-xl overflow-hidden">
+                                    <div className="h-12 px-4 border-b border-border flex items-center gap-3 bg-card/50">
+                                        <FileText className="w-4 h-4 text-chart-4" />
+                                        <span className="text-[10px] font-semibold text-chart-4 tracking-widest uppercase">
+                                            Draft Paper Generated
+                                        </span>
+                                        <div className="flex-1" />
+                                        <span className="text-[10px] text-muted-foreground">
+                                            Awaiting peer review...
+                                        </span>
+                                    </div>
+                                    <div className="p-6 max-h-[300px] overflow-hidden relative">
+                                        <div className="prose prose-invert prose-sm max-w-none prose-p:text-muted-foreground">
+                                            <StreamingMarkdown
+                                                animateKey={key}
+                                                content={item.content.slice(0, 2000) + (item.content.length > 2000 ? "..." : "")}
+                                                markdownClassName="prose prose-invert prose-sm max-w-none prose-p:text-muted-foreground prose-p:font-light"
+                                            />
+                                        </div>
+                                        <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-card to-transparent pointer-events-none" />
+                                    </div>
+                                </div>
+                            </motion.div>
+                        );
+                    } else if (item.type === "review") {
+                        return (
+                            <motion.div
+                                key={key}
+                                initial={{ opacity: 0, y: 20, filter: "blur(10px)" }}
+                                animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                                transition={{ duration: 0.8, ease: "easeOut" }}
+                                className="w-full"
+                            >
+                                <PeerReview review={item.review} />
+                            </motion.div>
+                        );
                     } else if (item.type === "paper") {
                         return (
                             <motion.div
@@ -365,7 +420,7 @@ export function LabNotebook() {
                                 animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
                                 transition={{ duration: 0.8, ease: "easeOut" }}
                             >
-                                <ResearchPaper content={item.content} charts={item.charts} />
+                                <ResearchPaper content={item.content} charts={item.charts} reviewScore={item.reviewScore} />
                             </motion.div>
                         );
                     }
@@ -375,10 +430,21 @@ export function LabNotebook() {
                 {/* Running Indicator at Bottom */}
                 {isRunning && orchestrator.timeline.length > 0 && (
                     <div className="flex justify-center py-12">
-                        <div className="flex items-center gap-3 px-4 py-2 rounded-full bg-[#1d1d1f] border border-[#333]">
-                            <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-                            <span className="text-[10px] font-medium text-[#86868b] uppercase tracking-widest">
-                                Orchestrating
+                        <div className={cn(
+                            "flex items-center gap-3 px-4 py-2 rounded-full bg-card border shadow-glow",
+                            orchestrator.status === "reviewing"
+                                ? "border-chart-4/20"
+                                : "border-primary/20"
+                        )}>
+                            <div className={cn(
+                                "w-1.5 h-1.5 rounded-full animate-pulse",
+                                orchestrator.status === "reviewing" ? "bg-chart-4" : "bg-primary"
+                            )} />
+                            <span className={cn(
+                                "text-[10px] font-semibold uppercase tracking-widest",
+                                orchestrator.status === "reviewing" ? "text-chart-4" : "text-primary"
+                            )}>
+                                {orchestrator.status === "reviewing" ? "Peer Reviewing" : "Orchestrating"}
                             </span>
                         </div>
                     </div>
@@ -395,7 +461,7 @@ export function LabNotebook() {
 
       {/* Minimal Fixed Header (Only visible when running) */}
       {isRunning && (
-          <div className="fixed top-0 left-0 right-0 z-50 h-1 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 animate-gradient-x" />
+          <div className="fixed top-0 left-0 right-0 z-50 h-1 bg-gradient-to-r from-primary via-accent to-chart-4 animate-gradient" />
       )}
 
       <CredentialPrompt

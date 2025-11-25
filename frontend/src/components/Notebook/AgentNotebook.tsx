@@ -86,25 +86,25 @@ function AgentNotebookContent({
 
     return (
         <div className={cn(
-            "flex flex-col h-full border border-[#1d1d1f] bg-black/50 backdrop-blur-sm transition-all duration-500",
-            isModal ? "border-0 bg-black/95" : ""
+            "flex flex-col h-full border border-border bg-card/50 backdrop-blur-sm rounded-xl transition-all duration-500",
+            isModal ? "border-0 bg-background/95 rounded-none" : "hover:border-primary/20"
         )}>
             {/* Header - Ultra Minimal */}
-            <div className="flex-shrink-0 h-12 px-4 border-b border-[#1d1d1f] flex items-center justify-between bg-black/50">
+            <div className="flex-shrink-0 h-12 px-4 border-b border-border flex items-center justify-between bg-card/50 rounded-t-xl">
                 <div className="flex items-center gap-3">
-                    <span className="text-[10px] font-medium text-[#f5f5f7] tracking-widest uppercase">
+                    <span className="text-[10px] font-semibold text-primary tracking-widest uppercase">
                         Agent {agent.id}
                     </span>
-                    <div className="w-[1px] h-3 bg-[#1d1d1f]" />
-                    <span className="text-[10px] font-medium text-[#6e6e73] uppercase tracking-widest">
+                    <div className="w-px h-3 bg-border" />
+                    <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest">
                         {agent.gpu || "CPU"}
                     </span>
                 </div>
                 <div className="flex items-center gap-3">
                     <StatusBadge status={agent.status} />
-                    <button 
+                    <button
                         onClick={onToggleExpand}
-                        className="p-1.5 hover:bg-[#1d1d1f] rounded-md transition-colors text-[#86868b] hover:text-white"
+                        className="p-1.5 hover:bg-primary/10 rounded-md transition-colors text-muted-foreground hover:text-primary"
                     >
                         {isExpanded ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
                     </button>
@@ -113,12 +113,12 @@ function AgentNotebookContent({
 
             {/* Hypothesis - Clean & Typography focused */}
             {agent.hypothesis && (
-                <div className="flex-shrink-0 p-4 border-b border-[#1d1d1f] bg-black">
-                    <div className="text-[10px] font-medium text-[#424245] uppercase tracking-widest mb-2">
+                <div className="flex-shrink-0 p-4 border-b border-border bg-background/50">
+                    <div className="text-[10px] font-semibold text-primary uppercase tracking-widest mb-2">
                         Objective
                     </div>
                     <div className={cn(
-                        "text-xs text-[#86868b] font-light leading-relaxed",
+                        "text-xs text-muted-foreground font-light leading-relaxed",
                         !isExpanded && "line-clamp-2"
                     )}>
                         {agent.hypothesis}
@@ -127,7 +127,7 @@ function AgentNotebookContent({
             )}
 
             {/* Notebook Content */}
-            <div 
+            <div
                 ref={scrollRef}
                 onScroll={handleScroll}
                 className={cn(
@@ -141,8 +141,8 @@ function AgentNotebookContent({
                 )}>
                     {agent.steps.length === 0 ? (
                         <div className="h-full flex flex-col items-center justify-center min-h-[200px]">
-                            <div className="w-1 h-1 rounded-full bg-[#333] mb-3" />
-                            <span className="text-[10px] font-medium text-[#424245] uppercase tracking-widest">Initializing Environment</span>
+                            <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse mb-3" />
+                            <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest">Initializing Environment</span>
                         </div>
                     ) : (
                         agent.steps.map((step) => (
@@ -183,13 +183,13 @@ export function AgentNotebook({ agent }: AgentNotebookProps) {
 
             {/* Expanded Modal View */}
             {isExpanded && createPortal(
-                <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-md animate-in fade-in duration-200 p-4 md:p-8">
-                    <div className="w-full h-full rounded-lg overflow-hidden animate-in zoom-in-95 duration-300 border border-[#1d1d1f] shadow-2xl">
-                        <AgentNotebookContent 
-                            agent={agent} 
-                            isExpanded={isExpanded} 
+                <div className="fixed inset-0 z-[100] bg-background/90 backdrop-blur-md animate-in fade-in duration-200 p-4 md:p-8">
+                    <div className="w-full h-full rounded-xl overflow-hidden animate-in zoom-in-95 duration-300 border border-border shadow-2xl shadow-primary/5">
+                        <AgentNotebookContent
+                            agent={agent}
+                            isExpanded={isExpanded}
                             onToggleExpand={() => setIsExpanded(!isExpanded)}
-                            isModal={true} 
+                            isModal={true}
                         />
                     </div>
                 </div>,

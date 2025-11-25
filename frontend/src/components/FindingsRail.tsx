@@ -78,21 +78,21 @@ function MiniChart({ chart }: { chart: ChartSpec }) {
 
     return (
         <div className="pt-3">
-            <div className="text-[10px] uppercase tracking-[0.2em] text-[#5c5c63] mb-2 flex items-center justify-between">
+            <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground mb-2 flex items-center justify-between">
                 <span>{chart.title || "Signal"}</span>
-                <span className="text-[9px] text-[#7c7c83]">{series.name || "metric"}</span>
+                <span className="text-[9px] text-muted-foreground/70">{series.name || "metric"}</span>
             </div>
-            <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-[140px] text-white/80">
+            <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-[140px]">
                 <defs>
                     <linearGradient id="spark" x1="0" x2="0" y1="0" y2="1">
-                        <stop offset="0%" stopColor="rgba(255,255,255,0.08)" />
-                        <stop offset="100%" stopColor="rgba(255,255,255,0.02)" />
+                        <stop offset="0%" stopColor="hsl(175 85% 50% / 0.1)" />
+                        <stop offset="100%" stopColor="hsl(175 85% 50% / 0.02)" />
                     </linearGradient>
                 </defs>
                 <rect x="0" y="0" width={width} height={height} fill="url(#spark)" rx="10" />
 
                 {/* Grid + axes */}
-                <g stroke="rgba(255,255,255,0.15)" strokeWidth="1">
+                <g stroke="hsl(var(--border))" strokeWidth="1" opacity="0.5">
                     {yTicks.map(({ y }, i) => (
                         <line key={`grid-${i}`} x1={padding.left} x2={width - padding.right} y1={y} y2={y} />
                     ))}
@@ -101,7 +101,7 @@ function MiniChart({ chart }: { chart: ChartSpec }) {
                 </g>
 
                 {/* Y-axis labels */}
-                <g fill="rgba(255,255,255,0.65)" fontSize="9" textAnchor="end">
+                <g fill="hsl(var(--muted-foreground))" fontSize="9" textAnchor="end">
                     {yTicks.map(({ y, value }, i) => (
                         <text key={`ylabel-${i}`} x={padding.left - 6} y={y + 3}>
                             {formatNumber(value)}
@@ -110,7 +110,7 @@ function MiniChart({ chart }: { chart: ChartSpec }) {
                 </g>
 
                 {/* X-axis labels */}
-                <g fill="rgba(255,255,255,0.65)" fontSize="9" textAnchor="middle">
+                <g fill="hsl(var(--muted-foreground))" fontSize="9" textAnchor="middle">
                     {xTicks.map(({ x, label }, i) => (
                         <text key={`xlabel-${i}`} x={x} y={height - 8}>
                             {label}
@@ -132,14 +132,14 @@ function MiniChart({ chart }: { chart: ChartSpec }) {
                                 width={barWidth}
                                 height={h}
                                 rx={2}
-                                fill="rgba(255,255,255,0.45)"
+                                fill="hsl(175 85% 50% / 0.6)"
                             />
                         );
                     })
                 ) : (
                     <polyline
                         fill="none"
-                        stroke="white"
+                        stroke="hsl(175 85% 50%)"
                         strokeWidth="2"
                         points={pts.join(" ")}
                         strokeLinejoin="round"
@@ -165,13 +165,13 @@ export function FindingsRail({ agents }: FindingsRailProps) {
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: 24 }}
                     transition={{ duration: 0.35, ease: "easeOut" }}
-                    className="hidden xl:flex w-[340px] shrink-0 h-screen bg-gradient-to-b from-[#0c0c0e] via-[#0a0a0a] to-[#060607] border-l border-white/5 relative overflow-hidden"
+                    className="hidden xl:flex w-[340px] shrink-0 h-screen bg-gradient-to-b from-card via-background to-background border-l border-border relative overflow-hidden"
                 >
-                    <div className="absolute inset-0 opacity-40 pointer-events-none" style={{ background: "radial-gradient(circle at 80% 15%, #1f1f28 0, transparent 45%)" }} />
+                    <div className="absolute inset-0 opacity-30 pointer-events-none" style={{ background: "radial-gradient(circle at 80% 15%, hsl(var(--primary) / 0.15) 0, transparent 45%)" }} />
                     <div className="flex-1 overflow-y-auto custom-scrollbar pt-10 pb-14 px-6 space-y-5">
                         <div className="px-1 space-y-1">
-                            <p className="text-[11px] font-semibold tracking-[0.25em] text-white/80 uppercase">Findings</p>
-                            <p className="text-[12px] text-[#7c7c83] leading-relaxed">Live distillations of sub-agents—posted whenever they think.</p>
+                            <p className="text-[11px] font-semibold tracking-[0.25em] text-primary uppercase">Findings</p>
+                            <p className="text-[12px] text-muted-foreground leading-relaxed">Live distillations of sub-agents—posted whenever they think.</p>
                         </div>
 
                         <div className="space-y-4">
@@ -179,17 +179,17 @@ export function FindingsRail({ agents }: FindingsRailProps) {
                                 <div
                                     key={insight.id}
                                     className={cn(
-                                        "p-5 rounded-2xl border border-white/8 bg-white/5 backdrop-blur-xl shadow-[0_20px_60px_rgba(0,0,0,0.35)]",
-                                        "hover:border-white/25 transition-all duration-300 hover:-translate-y-0.5"
+                                        "p-5 rounded-xl border border-border/50 bg-card/60 backdrop-blur-xl shadow-lg",
+                                        "hover:border-primary/30 hover:shadow-glow transition-all duration-300 hover:-translate-y-0.5"
                                     )}
                                 >
-                                    <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.2em] text-[#8a8a92]">
-                                        <span className="text-white/90">Agent {insight.agentId}</span>
-                                        <span className="text-[#6d6d74]">
+                                    <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.2em]">
+                                        <span className="text-primary font-semibold">Agent {insight.agentId}</span>
+                                        <span className="text-muted-foreground">
                                             {formatDistanceToNow(new Date(insight.timestamp), { addSuffix: true })}
                                         </span>
                                     </div>
-                                    <div className="mt-3 text-[11px] text-[#cfd0d4] leading-relaxed prose prose-invert prose-p:my-1 prose-li:my-0 prose-p:text-[#cfd0d4] prose-li:text-[#cfd0d4] prose-strong:text-white prose-code:text-white/80 max-w-none">
+                                    <div className="mt-3 text-[11px] text-secondary-foreground leading-relaxed prose prose-invert prose-p:my-1 prose-li:my-0 prose-p:text-secondary-foreground prose-li:text-secondary-foreground prose-strong:text-foreground prose-code:text-primary/80 max-w-none">
                                         <ReactMarkdown remarkPlugins={[remarkGfm]}>
                                             {insight.summary}
                                         </ReactMarkdown>

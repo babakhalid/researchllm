@@ -74,12 +74,12 @@ class SingleExperimentRequest(BaseModel):
         examples=["T4"],
     )
     model: str = Field(
-        "gemini-3-pro-preview",
+        "claude-opus-4-5",
         description=(
             "The LLM model to use for the experiment. "
-            "Options: 'gemini-3-pro-preview' or 'claude-opus-4-5'."
+            "Options: 'claude-opus-4-5' (default) or 'gemini-3-pro-preview'."
         ),
-        examples=["gemini-3-pro-preview", "claude-opus-4-5"],
+        examples=["claude-opus-4-5", "gemini-3-pro-preview"],
     )
     test_mode: bool = Field(
         False,
@@ -121,12 +121,12 @@ class OrchestratorExperimentRequest(BaseModel):
         examples=["A10G"],
     )
     model: str = Field(
-        "gemini-3-pro-preview",
+        "claude-opus-4-5",
         description=(
             "The LLM model to use for the experiment. "
-            "Options: 'gemini-3-pro-preview' or 'claude-opus-4-5'."
+            "Options: 'claude-opus-4-5' (default) or 'gemini-3-pro-preview'."
         ),
-        examples=["gemini-3-pro-preview", "claude-opus-4-5"],
+        examples=["claude-opus-4-5", "gemini-3-pro-preview"],
     )
     num_agents: int = Field(
         3,

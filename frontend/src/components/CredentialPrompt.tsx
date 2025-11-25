@@ -70,40 +70,40 @@ export function CredentialPrompt({
         <AnimatePresence>
             {open && (
                 <motion.div
-                    className="fixed inset-0 z-[120] flex items-center justify-center bg-black/70 backdrop-blur-sm px-4"
+                    className="fixed inset-0 z-[120] flex items-center justify-center bg-background/80 backdrop-blur-md px-4"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                 >
-                    <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(ellipse_at_top,_rgba(255,255,255,0.08),_transparent_45%)]" />
+                    <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(ellipse_at_top,_hsl(var(--primary)/0.1),_transparent_45%)]" />
                     <motion.div
                         initial={{ opacity: 0, y: 30, scale: 0.97 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 20 }}
                         transition={{ duration: 0.2 }}
-                        className="relative w-full max-w-4xl overflow-hidden rounded-2xl border border-white/10 bg-[#0b0b0c]/90 shadow-2xl"
+                        className="relative w-full max-w-4xl overflow-hidden rounded-2xl border border-border bg-card/95 shadow-2xl shadow-primary/5"
                     >
-                        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/30 to-transparent" />
-                        <div className="absolute -left-40 -top-40 h-80 w-80 rounded-full bg-purple-500/10 blur-3xl" />
-                        <div className="absolute -right-32 top-10 h-64 w-64 rounded-full bg-blue-500/10 blur-3xl" />
+                        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
+                        <div className="absolute -left-40 -top-40 h-80 w-80 rounded-full bg-primary/10 blur-3xl" />
+                        <div className="absolute -right-32 top-10 h-64 w-64 rounded-full bg-accent/10 blur-3xl" />
 
                         <div className="relative p-8 md:p-10 space-y-6">
                             <div className="flex items-start justify-between gap-4">
                                 <div className="space-y-2">
-                                    <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.22em] text-white/70">
-                                        <Sparkles className="h-3.5 w-3.5 text-amber-300" />
+                                    <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.22em] text-primary">
+                                        <Sparkles className="h-3.5 w-3.5 text-primary" />
                                         Environment check
                                     </div>
-                                    <h2 className="text-2xl font-semibold text-white tracking-tight">
+                                    <h2 className="text-2xl font-semibold text-foreground tracking-tight">
                                         Add your API keys to launch the run
                                     </h2>
-                                    <p className="text-sm text-white/60 max-w-2xl">
-                                        We need at least one LLM key (Google for Gemini or Anthropic for Claude) and a Modal token pair to spin up research sandboxes. Keys are stored locally in your <code className="px-2 py-1 rounded bg-white/5 text-[11px]">.env</code>.
+                                    <p className="text-sm text-muted-foreground max-w-2xl">
+                                        We need at least one LLM key (Google for Gemini or Anthropic for Claude) and a Modal token pair to spin up research sandboxes. Keys are stored locally in your <code className="px-2 py-1 rounded bg-secondary text-[11px] text-primary">.env</code>.
                                     </p>
                                 </div>
                                 <button
                                     onClick={onClose}
-                                    className="text-white/60 hover:text-white transition-colors rounded-full p-2 border border-white/10 hover:border-white/30"
+                                    className="text-muted-foreground hover:text-foreground transition-colors rounded-full p-2 border border-border hover:border-primary/50"
                                     aria-label="Close credential prompt"
                                 >
                                     <X className="h-5 w-5" />
@@ -111,12 +111,12 @@ export function CredentialPrompt({
                             </div>
 
                             <div className="grid gap-6 md:grid-cols-[1.1fr_1.2fr]">
-                                <div className="space-y-4 rounded-xl border border-white/10 bg-white/5 p-5">
+                                <div className="space-y-4 rounded-xl border border-border bg-secondary/50 p-5">
                                     <div className="flex items-center gap-3">
-                                        <ShieldCheck className={`h-5 w-5 ${hasRequiredKey && modalReady ? "text-emerald-400" : "text-amber-300"}`} />
+                                        <ShieldCheck className={`h-5 w-5 ${hasRequiredKey && modalReady ? "text-chart-2" : "text-chart-3"}`} />
                                         <div className="flex-1">
-                                            <p className="text-sm font-medium text-white">Credentials status</p>
-                                            <p className="text-xs text-white/60">
+                                            <p className="text-sm font-medium text-foreground">Credentials status</p>
+                                            <p className="text-xs text-muted-foreground">
                                                 {hasRequiredKey && modalReady
                                                     ? "Ready to launch."
                                                     : "Add the missing keys to continue."}
@@ -143,36 +143,36 @@ export function CredentialPrompt({
                                             href="https://aistudio.google.com/app/apikey"
                                             target="_blank"
                                             rel="noreferrer"
-                                            className="group inline-flex items-center justify-center gap-2 rounded-lg border border-white/15 bg-gradient-to-r from-white/5 to-white/0 px-3 py-3 text-xs font-medium text-white transition hover:border-white/30 hover:from-white/10"
+                                            className="group inline-flex items-center justify-center gap-2 rounded-lg border border-border bg-card px-3 py-3 text-xs font-medium text-foreground transition hover:border-primary/50 hover:bg-primary/10"
                                         >
-                                            <Sparkles className="h-4 w-4 text-amber-300" />
+                                            <Sparkles className="h-4 w-4 text-chart-3" />
                                             Google key
-                                            <ExternalLink className="h-3 w-3 text-white/50 group-hover:text-white" />
+                                            <ExternalLink className="h-3 w-3 text-muted-foreground group-hover:text-primary" />
                                         </a>
                                         <a
                                             href="https://console.anthropic.com/settings/keys"
                                             target="_blank"
                                             rel="noreferrer"
-                                            className="group inline-flex items-center justify-center gap-2 rounded-lg border border-white/15 bg-gradient-to-r from-white/5 to-white/0 px-3 py-3 text-xs font-medium text-white transition hover:border-white/30 hover:from-white/10"
+                                            className="group inline-flex items-center justify-center gap-2 rounded-lg border border-border bg-card px-3 py-3 text-xs font-medium text-foreground transition hover:border-primary/50 hover:bg-primary/10"
                                         >
-                                            <Sparkles className="h-4 w-4 text-purple-300" />
+                                            <Sparkles className="h-4 w-4 text-chart-4" />
                                             Anthropic key
-                                            <ExternalLink className="h-3 w-3 text-white/50 group-hover:text-white" />
+                                            <ExternalLink className="h-3 w-3 text-muted-foreground group-hover:text-primary" />
                                         </a>
                                         <a
                                             href="https://modal.com/account/tokens"
                                             target="_blank"
                                             rel="noreferrer"
-                                            className="group inline-flex items-center justify-center gap-2 rounded-lg border border-white/15 bg-gradient-to-r from-white/5 to-white/0 px-3 py-3 text-xs font-medium text-white transition hover:border-white/30 hover:from-white/10"
+                                            className="group inline-flex items-center justify-center gap-2 rounded-lg border border-border bg-card px-3 py-3 text-xs font-medium text-foreground transition hover:border-primary/50 hover:bg-primary/10"
                                         >
-                                            <KeyRound className="h-4 w-4 text-sky-300" />
+                                            <KeyRound className="h-4 w-4 text-primary" />
                                             Modal tokens
-                                            <ExternalLink className="h-3 w-3 text-white/50 group-hover:text-white" />
+                                            <ExternalLink className="h-3 w-3 text-muted-foreground group-hover:text-primary" />
                                         </a>
                                     </div>
                                 </div>
 
-                                <div className="space-y-4 rounded-xl border border-white/10 bg-black/60 p-5">
+                                <div className="space-y-4 rounded-xl border border-border bg-background/80 p-5">
                                     <Field
                                         label="Google API key"
                                         placeholder="Paste your AI Studio key"
@@ -207,17 +207,17 @@ export function CredentialPrompt({
                                     />
 
                                     {error && (
-                                        <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-200">
+                                        <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
                                             {error}
                                         </div>
                                     )}
 
                                     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between pt-1">
-                                        <p className="text-xs text-white/50">{readinessCopy}</p>
+                                        <p className="text-xs text-muted-foreground">{readinessCopy}</p>
                                         <button
                                             onClick={onSubmit}
                                             disabled={disableSubmit}
-                                            className="inline-flex items-center justify-center gap-2 rounded-lg bg-white px-4 py-2.5 text-sm font-semibold text-black transition hover:bg-white/90 disabled:cursor-not-allowed disabled:bg-white/40"
+                                            className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition hover:shadow-glow disabled:cursor-not-allowed disabled:opacity-40"
                                         >
                                             {isSaving ? (
                                                 <>
@@ -253,24 +253,24 @@ function StatusPill({ label, ok, required = true }: StatusPillProps) {
     const isOptional = !required && !ok;
 
     return (
-        <div className={`flex items-center justify-between rounded-lg border border-white/10 bg-white/5 px-3 py-2 ${isOptional ? "opacity-50" : ""}`}>
-            <span className="text-sm text-white/80">{label}</span>
+        <div className={`flex items-center justify-between rounded-lg border border-border bg-card px-3 py-2 ${isOptional ? "opacity-50" : ""}`}>
+            <span className="text-sm text-secondary-foreground">{label}</span>
             <span
                 className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-[11px] font-semibold ${
                     ok
-                        ? "bg-emerald-500/15 text-emerald-200"
+                        ? "bg-chart-2/15 text-chart-2"
                         : isOptional
-                        ? "bg-white/5 text-white/40"
-                        : "bg-amber-500/10 text-amber-200"
+                        ? "bg-muted text-muted-foreground"
+                        : "bg-chart-3/10 text-chart-3"
                 }`}
             >
                 <div
                     className={`h-2 w-2 rounded-full ${
                         ok
-                            ? "bg-emerald-400 shadow-[0_0_0_4px_rgba(52,211,153,0.2)]"
+                            ? "bg-chart-2 shadow-[0_0_0_4px_hsl(var(--chart-2)/0.2)]"
                             : isOptional
-                            ? "bg-white/30"
-                            : "bg-amber-300 shadow-[0_0_0_4px_rgba(251,191,36,0.25)]"
+                            ? "bg-muted-foreground/30"
+                            : "bg-chart-3 shadow-[0_0_0_4px_hsl(var(--chart-3)/0.25)]"
                     }`}
                 />
                 {ok ? "Ready" : isOptional ? "Optional" : "Missing"}
@@ -290,12 +290,12 @@ type FieldProps = {
 
 function Field({ label, placeholder, value, onChange, status, helper }: FieldProps) {
     const statusText = status === "ok" ? "Optional (already set)" : status === "optional" ? "Optional" : "Required";
-    const statusColor = status === "ok" ? "text-emerald-300" : status === "optional" ? "text-blue-300" : "text-amber-200";
+    const statusColor = status === "ok" ? "text-chart-2" : status === "optional" ? "text-primary" : "text-chart-3";
 
     return (
         <label className="block space-y-2">
             <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-white">{label}</span>
+                <span className="text-sm font-medium text-foreground">{label}</span>
                 <span className={`text-[11px] uppercase tracking-[0.18em] ${statusColor}`}>
                     {statusText}
                 </span>
@@ -304,9 +304,9 @@ function Field({ label, placeholder, value, onChange, status, helper }: FieldPro
                 value={value}
                 onChange={(e) => onChange(e.target.value)}
                 placeholder={placeholder}
-                className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white placeholder:text-white/30 focus:border-white/50 focus:outline-none"
+                className="w-full rounded-lg border border-border bg-secondary px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/50 focus:border-primary/50 focus:ring-2 focus:ring-primary/20 focus:outline-none transition-all"
             />
-            {helper && <p className="text-xs text-white/50">{helper}</p>}
+            {helper && <p className="text-xs text-muted-foreground">{helper}</p>}
         </label>
     );
 }

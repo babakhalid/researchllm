@@ -1,7 +1,4 @@
 # AI Researcher
-[![Twitter Follow](https://img.shields.io/twitter/follow/mattshumer_?style=social)](https://twitter.com/mattshumer_)
-
-[Be the first to know when I publish new AI builds + demos!](https://tally.so/r/w2M17p)
 
 An autonomous AI researcher. It takes a research objective, breaks it into experiments, spins up separate agents with access to their own GPUs to run these experiments, and delivers a paper-style writeup with findings.
 

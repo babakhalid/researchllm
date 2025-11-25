@@ -68,10 +68,10 @@ def main():
         "--model",
         type=str,
         choices=["gemini-3-pro-preview", "claude-opus-4-5"],
-        default="gemini-3-pro-preview",
+        default="claude-opus-4-5",
         help=(
             "LLM model to use: "
-            "'gemini-3-pro-preview' (default) or 'claude-opus-4-5'."
+            "'claude-opus-4-5' (default) or 'gemini-3-pro-preview'."
         ),
     )
 
