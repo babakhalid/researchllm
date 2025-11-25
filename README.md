@@ -1,6 +1,11 @@
 # AI Researcher
 
-An autonomous AI researcher. It takes a research objective, breaks it into experiments, spins up separate agents with access to their own GPUs to run these experiments, and delivers a paper-style writeup with findings.
+An autonomous AI researcher built with **Vite + React + Node.js**. It takes a research objective, breaks it into experiments, spins up separate agents with access to their own GPUs to run these experiments, and delivers a paper-style writeup with findings.
+
+## Architecture
+- **Frontend**: Vite + React + TypeScript (root level)
+- **Backend**: Node.js + Express API server (`server/` directory)
+- **Research Engine**: Python scripts in `backup/` folder (orchestrator, agents, etc.)
 
 ## How it Works
 - Decomposes your prompt into experiments and assigns them to specialist researcher agents.
@@ -8,12 +13,12 @@ An autonomous AI researcher. It takes a research objective, breaks it into exper
 - Based on the results of these experiments, the orchestrator can decide to finalize, or run more experiments.
 - The orchestrator goes over all of the results and turns them into a coherent "paper".
 
-## Run it (web notebook, one command)
-The fastest way to use it:
+## Quick Start
+```bash
+npm run setup    # Install all dependencies (frontend, server, Python)
+npm run dev      # Start Vite frontend + Node.js API server
 ```
-python run_app.py
-```
-This installs missing deps, starts the API + frontend, and opens the notebook. If Google/Modal keys aren’t set, the UI will prompt you and save them locally before the run starts.
+This installs all dependencies and starts both the Vite dev server (port 5173) and Node.js API server (port 8000).
 
 ## Keys Needed
 - **LLM key** (at least one):
@@ -25,21 +30,23 @@ This installs missing deps, starts the API + frontend, and opens the notebook. I
 ## Model Selection
 Choose between **Gemini 3 Pro** and **Claude Opus 4.5** from the dropdown in the web UI, or via CLI with `--model`.
 
-## Optional CLI
-Prefer the terminal?
+## Development Commands
+```bash
+npm run dev              # Start both API server and Vite dev server
+npm run api              # Start only the Node.js API server
+npm run build            # Build frontend and server for production
+npm run start            # Start production server
+npm run lint             # Lint the frontend code
+npm run typecheck        # TypeScript type checking
 ```
+
+## Optional CLI (Python scripts in backup/)
+The research engine can still be run directly via Python CLI:
+```bash
+cd backup
 python -m venv venv && source venv/bin/activate
 pip install -r requirements.txt
 python main.py "Does label smoothing improve ViT-Base on CIFAR-10?" --mode single --gpu any --model gemini-3-pro-preview
-```
-Orchestrator (multi-agent):
-```
-python main.py "Characterize scaling laws for sparse attention transformers" \
-  --mode orchestrator --num-agents 3 --max-rounds 3 --max-parallel 2 --gpu any
-```
-Dry run:
-```
-python main.py "Sanity check the pipeline" --mode orchestrator --test-mode
 ```
 
 ## Deploy to Railway
