@@ -1,0 +1,35 @@
+{
+  "name": "ai-researcher",
+  "version": "1.0.0",
+  "description": "Autonomous AI research platform with GPU-accelerated experiments",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "concurrently -n \"api,vite\" -c \"yellow,cyan\" \"npm run api\" \"npm run frontend:dev\"",
+    "api": "python api_server.py",
+    "frontend:dev": "npm run --prefix frontend dev",
+    "frontend:build": "npm run --prefix frontend build",
+    "frontend:lint": "npm run --prefix frontend lint",
+    "frontend:typecheck": "npm run --prefix frontend typecheck",
+    "build": "npm run frontend:build",
+    "install:all": "pip install -r requirements.txt && npm install --prefix frontend",
+    "setup": "python -m venv venv && . venv/bin/activate && npm run install:all",
+    "clean": "rm -rf frontend/node_modules frontend/dist venv __pycache__ .pytest_cache"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [
+    "ai",
+    "research",
+    "machine-learning",
+    "agents",
+    "vite",
+    "react",
+    "fastapi"
+  ],
+  "license": "MIT"
+}

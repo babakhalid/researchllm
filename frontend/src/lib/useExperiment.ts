@@ -7,6 +7,7 @@ export interface ExperimentStep {
     id: string;
     type: StepType;
     content: string;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     metadata?: Record<string, any>;
     timestamp: number;
 }
@@ -204,12 +205,13 @@ export function useExperiment() {
                 
                 return { ...prev, timeline, thoughts };
             } else {
-                // Create new item
+                // Create new item - use type assertion since 'thought' is a valid TimelineItem type
                 const newItem: TimelineItem = {
-                    type: type as any, // 'text' isn't in TimelineItem type explicitly? let's check
+                    type: type,
                     content: chunk,
                     timestamp: Date.now()
-                };
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                } as any;
                 
                 // TimelineItem is: thought | agents | paper. 
                 // If 'text' is meant to be something else, we might need to adjust.
@@ -359,7 +361,8 @@ export function useExperiment() {
         }
     };
 
-    const handleStructuredEvent = (event: any, inferredAgentId?: string) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const handleStructuredEvent = (event: { type: string; data: Record<string, any> }, inferredAgentId?: string) => {
         const { type, data } = event;
 
         switch (type) {
@@ -498,7 +501,7 @@ export function useExperiment() {
                 }
                 break;
 
-            case "ORCH_PAPER":
+            case "ORCH_PAPER": {
                 // Capture any charts that agents have produced so we can surface them alongside the paper.
                 const charts: ChartSpec[] = Object.values(agentsRef.current)
                     .flatMap((agent) => (agent.insights || []).map((insight) => insight.chart))
@@ -535,6 +538,7 @@ export function useExperiment() {
                     ],
                 }));
                 break;
+            }
 
             case "ORCH_TOOL":
                 // We could also track orchestrator steps if we wanted a notebook for it

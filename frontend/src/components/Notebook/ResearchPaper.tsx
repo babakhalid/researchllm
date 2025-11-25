@@ -23,31 +23,19 @@ function PaperChart({ chart, compact = false }: { chart: ChartSpec; compact?: bo
         () => (series?.values || []).map((v) => Number(v)).filter((v) => Number.isFinite(v)),
         [series],
     );
-    if (!series || !values.length) return null;
-
-    const min = Math.min(...values);
-    const max = Math.max(...values);
-    const span = max - min || 1;
 
     const innerWidth = width - padding.left - padding.right;
     const innerHeight = height - padding.top - padding.bottom;
 
-    const formatNumber = (val: number) => {
-        const abs = Math.abs(val);
-        if (abs >= 1_000_000_000) return `${(val / 1_000_000_000).toFixed(1)}b`;
-        if (abs >= 1_000_000) return `${(val / 1_000_000).toFixed(1)}m`;
-        if (abs >= 1_000) return `${(val / 1_000).toFixed(1)}k`;
-        if (abs >= 100) return val.toFixed(0);
-        if (abs >= 1) return val.toFixed(2);
-        return val.toPrecision(2);
-    };
-
-    const xLabels =
-        Array.isArray(chart.labels) && chart.labels.length === values.length
+    const xLabels = useMemo(() => {
+        if (!values.length) return [];
+        return Array.isArray(chart.labels) && chart.labels.length === values.length
             ? chart.labels
             : values.map((_, idx) => `${idx + 1}`);
+    }, [chart.labels, values]);
 
     const xTicks = useMemo(() => {
+        if (!xLabels.length) return [];
         const maxTicks = compact ? 4 : 6;
         const step = Math.max(1, Math.ceil(xLabels.length / maxTicks));
         const ticks: { idx: number; label: string; x: number }[] = [];
@@ -62,6 +50,23 @@ function PaperChart({ chart, compact = false }: { chart: ChartSpec; compact?: bo
         }
         return ticks;
     }, [xLabels, padding.left, innerWidth, compact]);
+
+    // Early return after all hooks are called
+    if (!series || !values.length) return null;
+
+    const min = Math.min(...values);
+    const max = Math.max(...values);
+    const span = max - min || 1;
+
+    const formatNumber = (val: number) => {
+        const abs = Math.abs(val);
+        if (abs >= 1_000_000_000) return `${(val / 1_000_000_000).toFixed(1)}b`;
+        if (abs >= 1_000_000) return `${(val / 1_000_000).toFixed(1)}m`;
+        if (abs >= 1_000) return `${(val / 1_000).toFixed(1)}k`;
+        if (abs >= 100) return val.toFixed(0);
+        if (abs >= 1) return val.toFixed(2);
+        return val.toPrecision(2);
+    };
 
     const yTicks = [0, 0.5, 1].map((t) => ({
         value: min + span * t,
@@ -316,7 +321,7 @@ export function ResearchPaper({ content, charts, reviewScore }: ResearchPaperPro
                                         <ReactMarkdown 
                                             remarkPlugins={[remarkGfm]}
                                             components={{
-                                                h1: ({node, ...props}) => <h1 {...props} />,
+                                                h1: (props) => <h1 {...props} />,
                                             }}
                                         >
                                             {content}

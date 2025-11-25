@@ -1,4 +1,4 @@
-# Nixpacks configuration for Railway
+# Nixpacks configuration for Railway deployment
 [phases.setup]
 nixPkgs = ["python311", "nodejs_20"]
 

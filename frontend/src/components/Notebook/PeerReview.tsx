@@ -4,8 +4,6 @@ import { motion } from "framer-motion";
 import { CheckCircle2, XCircle, AlertCircle, ChevronDown, ChevronUp, Sparkles, FileText, X } from "lucide-react";
 import { ReviewState } from "@/lib/useExperiment";
 import { cn } from "@/lib/utils";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
 
 interface PeerReviewProps {
     review: ReviewState;
