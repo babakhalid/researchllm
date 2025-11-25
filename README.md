@@ -11,9 +11,10 @@ An autonomous AI researcher. It takes a research objective, breaks it into exper
 ## Run it (web notebook, one command)
 The fastest way to use it:
 ```
-python run_app.py
+npm run setup
+npm run dev
 ```
-This installs missing deps, starts the API + frontend, and opens the notebook. If Google/Modal keys aren’t set, the UI will prompt you and save them locally before the run starts.
+This installs all dependencies, starts the Vite server + frontend, and opens the notebook. If Google/Modal keys aren't set, the UI will prompt you and save them locally before the run starts.
 
 ## Keys Needed
 - **LLM key** (at least one):

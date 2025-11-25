@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "dev:full": "concurrently -n \"api,vite\" -c \"yellow,cyan\" \"npm run api\" \"npm run dev\"",
-    "api": "cd .. && python api_server.py",
+    "api": "npm run --prefix ../server dev",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
